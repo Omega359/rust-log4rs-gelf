@@ -10,14 +10,14 @@ use appender::BufferAppenderBuilder;
 struct BufferAppenderDeserializer;
 
 impl Deserialize for BufferAppenderDeserializer {
-    type Trait = Append;
+    type Trait = dyn Append;
     type Config = gelf_logger::Config;
 
     fn deserialize(
         &self,
         config: gelf_logger::Config,
         _deserializers: &Deserializers,
-    ) -> Result<Box<Append>, Box<std::error::Error + Sync + Send>> {
+    ) -> Result<Box<dyn Append>, Box<dyn std::error::Error + Sync + Send>> {
         let appender = BufferAppenderBuilder::default()
             .set_level(config.level().clone())
             .set_hostname(config.hostname())

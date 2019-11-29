@@ -2,13 +2,16 @@
 // license that can be found in the LICENSE file.
 // Copyright 2009 The log4rs-gelf Authors. All rights reserved.
 
+use std::{fmt, thread};
 use std::collections::BTreeMap;
-use std::fmt;
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{Receiver, sync_channel, SyncSender};
 
+use gelf_logger::{Batch, BatchProcessor, Buffer, Config, Event, GelfTcpOutput, Metronome};
 use log4rs::append::Append;
 use log::Record;
 use serde_gelf::{GelfLevel, GelfRecord};
-use gelf_logger::Config;
+use serde_value::Value;
 
 /// Struct to handle the GELF buffer.
 ///
@@ -33,7 +36,9 @@ use gelf_logger::Config;
 ///         ;
 /// }
 /// ```
-pub struct BufferAppender;
+pub struct BufferAppender {
+    processor: BatchProcessor
+}
 
 /// Builder for [`BufferAppender`](struct.BufferAppender.html).
 ///
@@ -56,7 +61,6 @@ pub struct BufferAppender;
 ///         ;
 /// }
 /// ```
-
 #[derive(Debug)]
 pub struct BufferAppenderBuilder {
     level: GelfLevel,
@@ -66,7 +70,7 @@ pub struct BufferAppenderBuilder {
     null_character: bool,
     buffer_size: Option<usize>,
     buffer_duration: Option<u64>,
-    additional_fields: BTreeMap<String, serde_value::Value>,
+    additional_fields: BTreeMap<Value, Value>,
 }
 
 impl Default for BufferAppenderBuilder {
@@ -81,8 +85,8 @@ impl Default for BufferAppenderBuilder {
             buffer_duration: Some(500),
             additional_fields: {
                 let mut additional_fields = BTreeMap::new();
-                additional_fields.insert("pkg_name".into(), serde_value::Value::String(env!("CARGO_PKG_NAME").into()));
-                additional_fields.insert("pkg_version".into(), serde_value::Value::String(env!("CARGO_PKG_VERSION").into()));
+                additional_fields.insert(Value::String("pkg_name".into()), Value::String(env!("CARGO_PKG_NAME").into()));
+                additional_fields.insert(Value::String("pkg_version".into()), Value::String(env!("CARGO_PKG_VERSION").into()));
                 additional_fields
             },
         }
@@ -130,18 +134,18 @@ impl BufferAppenderBuilder {
         self
     }
     /// Adds an additional data which will be append to each log entry.
-    pub fn put_additional_field(mut self, key: &str, value: serde_value::Value) -> BufferAppenderBuilder {
-        self.additional_fields.insert(key.to_string(), value);
+    pub fn put_additional_field(mut self, key: &str, value: Value) -> BufferAppenderBuilder {
+        self.additional_fields.insert(Value::String(key.to_string()), value);
         self
     }
     /// Adds multiple additional data which will be append to each log entry.
-    pub fn extend_additional_field(mut self, additional_fields: BTreeMap<String, serde_value::Value>) -> BufferAppenderBuilder {
+    pub fn extend_additional_field(mut self, additional_fields: BTreeMap<Value, Value>) -> BufferAppenderBuilder {
         self.additional_fields.extend(additional_fields);
         self
     }
     /// Invoke the builder and return a [`BufferAppender`](struct.BufferAppender.html).
     pub fn build(self) -> Result<BufferAppender, gelf_logger::Error> {
-        let config = Config::builder()
+        let cfg = Config::builder()
             .set_level(self.level)
             .set_hostname(self.hostname)
             .set_port(self.port)
@@ -151,9 +155,23 @@ impl BufferAppenderBuilder {
             .set_buffer_duration(self.buffer_duration.unwrap_or(500))
             .extend_additional_fields(self.additional_fields)
             .build();
-        let _ = gelf_logger::init(config)?;
 
-        Ok(BufferAppender {})
+        let (tx, rx): (SyncSender<Event>, Receiver<Event>) = sync_channel(10_000_000);
+
+        if let &Some(duration) = cfg.buffer_duration() {
+            let ctx = tx.clone();
+            Metronome::start(duration, ctx);
+        }
+
+        let gelf_level = cfg.level().clone();
+        let arx = Arc::new(Mutex::new(rx));
+        thread::spawn(move || {
+            let _ = Buffer::new(arx, GelfTcpOutput::from(&cfg)).run();
+        });
+
+        Ok(BufferAppender {
+            processor: BatchProcessor::new(tx, gelf_level)
+        })
     }
 }
 
@@ -182,12 +200,11 @@ impl fmt::Debug for BufferAppender {
 
 
 impl Append for BufferAppender {
-    fn append(&self, record: &Record) -> Result<(), Box<std::error::Error + Sync + Send>> {
-        match gelf_logger::processor().send(&GelfRecord::from(record)) {
+    fn append(&self, record: &Record) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
+        match self.processor.send(&GelfRecord::from(record)) {
             Ok(()) => Ok(()),
             Err(exc) => Err(Box::new(exc))
         }
     }
-
     fn flush(&self) {}
 }

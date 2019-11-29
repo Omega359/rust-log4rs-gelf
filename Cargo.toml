@@ -1,6 +1,6 @@
 [package]
 name = "log4rs-gelf"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["OVH SAS <github@ovh.net>"]
 license = "BSD-3-Clause"
 license-file = "LICENSE"
@@ -15,6 +15,6 @@ ovh-ldp = ["gelf_logger/ovh-ldp", "serde_gelf/ovh-ldp"]
 [dependencies]
 log = "0.4"
 log4rs = "0.8"
-serde-value = "0.5"
+serde-value = "0.6"
 gelf_logger = "0.1"
 serde_gelf = "0.1"

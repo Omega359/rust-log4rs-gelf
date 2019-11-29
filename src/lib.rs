@@ -80,6 +80,7 @@ extern crate gelf_logger;
 extern crate log;
 extern crate log4rs;
 extern crate serde_gelf;
+extern crate serde_value;
 
 pub use appender::{BufferAppender, BufferAppenderBuilder};
 
