@@ -2,12 +2,10 @@
 // license that can be found in the LICENSE file.
 // Copyright 2009 The log4rs-gelf Authors. All rights reserved.
 
-use std::{fmt, thread};
 use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{Receiver, sync_channel, SyncSender};
+use std::fmt;
 
-use gelf_logger::{Batch, BatchProcessor, Buffer, Config, Event, GelfTcpOutput, Metronome};
+use gelf_logger::{Batch, BatchProcessor, Config, init_processor};
 use log4rs::append::Append;
 use log::Record;
 use serde_gelf::{GelfLevel, GelfRecord};
@@ -156,21 +154,8 @@ impl BufferAppenderBuilder {
             .extend_additional_fields(self.additional_fields)
             .build();
 
-        let (tx, rx): (SyncSender<Event>, Receiver<Event>) = sync_channel(10_000_000);
-
-        if let &Some(duration) = cfg.buffer_duration() {
-            let ctx = tx.clone();
-            Metronome::start(duration, ctx);
-        }
-
-        let gelf_level = cfg.level().clone();
-        let arx = Arc::new(Mutex::new(rx));
-        thread::spawn(move || {
-            let _ = Buffer::new(arx, GelfTcpOutput::from(&cfg)).run();
-        });
-
         Ok(BufferAppender {
-            processor: BatchProcessor::new(tx, gelf_level)
+            processor: init_processor(&cfg)?
         })
     }
 }
