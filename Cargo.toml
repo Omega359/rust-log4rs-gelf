@@ -1,6 +1,6 @@
 [package]
 name = "log4rs-gelf"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["OVH SAS <github@ovh.net>"]
 license = "BSD-3-Clause"
 license-file = "LICENSE"
