@@ -2,19 +2,16 @@
 name = "log4rs-gelf"
 version = "0.1.4"
 authors = ["OVH SAS <github@ovh.net>"]
-license = "BSD-3-Clause"
 license-file = "LICENSE"
 description = "TCP Handler and GELF Encoder to use with the log4rs logging framework."
 keywords = ["serde", "logs", "GELF"]
 readme = "README.md"
 repository = "https://github.com/ovh/rust-log4rs-gelf"
 
-[features]
-ovh-ldp = ["gelf_logger/ovh-ldp", "serde_gelf/ovh-ldp"]
-
 [dependencies]
 log = "0.4"
-log4rs = "0.8"
+log4rs = "1"
 serde-value = "0.6"
-gelf_logger = "0.1"
+gelf_logger = "0.2"
 serde_gelf = "0.1"
+anyhow = "1"

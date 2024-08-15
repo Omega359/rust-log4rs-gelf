@@ -37,25 +37,31 @@
 //!   level: info
 //! ```
 //!
-//! ```rust
+//! ```rust,ignore
 //! log4rs_gelf::init_file("/tmp/log4rs.yml", None).unwrap();
 //! ```
 //! Programmatically constructing a configuration:
 //! ```rust
+//! extern crate serde_gelf;
+//! extern crate serde_value;
+//! extern crate log4rs;
+//! extern crate log;
+//!
 //! use serde_gelf::GelfLevel;
 //! use serde_value::Value;
 //! use log4rs::config::{Config, Appender, Root};
 //! use log::LevelFilter;
 //!
 //! fn main() {
-//!    let buffer = log4rs_gelf::BufferAppender::builder()
+//!    use std::time::Duration;
+//! let buffer = log4rs_gelf::BufferAppender::builder()
 //!        .set_level(GelfLevel::Informational)
 //!        .set_hostname("localhost")
 //!        .set_port(12202)
 //!        .set_use_tls(false)
 //!        .set_null_character(true)
 //!        .set_buffer_size(Some(5))
-//!        .set_buffer_duration(Some(5))
+//!        .set_buffer_duration(Some(Duration::from_millis(500)))
 //!        .put_additional_field("component", Value::String("rust-cs".to_string()))
 //!        .build()
 //!        .unwrap();
@@ -81,7 +87,9 @@ extern crate log;
 extern crate log4rs;
 extern crate serde_gelf;
 extern crate serde_value;
+extern crate anyhow;
 
+use log::SetLoggerError;
 pub use appender::{BufferAppender, BufferAppenderBuilder};
 
 mod file;
@@ -101,7 +109,7 @@ mod appender;
 ///
 /// ## Example
 ///
-/// ```rust
+/// ```rust, ignore
 /// extern crate log4rs_gelf;
 ///
 /// fn main() {
@@ -113,7 +121,7 @@ mod appender;
 /// }
 /// ```
 ///
-pub fn init_file<P>(path: P, deserializers: Option<log4rs::file::Deserializers>) -> Result<(), log4rs::Error> where P: AsRef<std::path::Path> {
+pub fn init_file<P>(path: P, deserializers: Option<log4rs::config::Deserializers>) -> anyhow::Result<()> where P: AsRef<std::path::Path> {
     log4rs::init_file(path, deserializers.unwrap_or(file::deserializers()))
 }
 
@@ -129,20 +137,26 @@ pub fn init_file<P>(path: P, deserializers: Option<log4rs::file::Deserializers>)
 /// ## Example
 ///
 /// ```rust
+/// extern crate serde_gelf;
+/// extern crate serde_value;
+/// extern crate log4rs;
+/// extern crate log;
+///
 ///use serde_gelf::GelfLevel;
 ///use serde_value::Value;
 ///use log4rs::config::{Config, Appender, Root};
 ///use log::LevelFilter;
 ///
 /// fn main() {
-///    let buffer = log4rs_gelf::BufferAppender::builder()
+///    use std::time::Duration;
+/// let buffer = log4rs_gelf::BufferAppender::builder()
 ///        .set_level(GelfLevel::Informational)
 ///        .set_hostname("localhost")
 ///        .set_port(12202)
 ///        .set_use_tls(false)
 ///        .set_null_character(true)
 ///        .set_buffer_size(Some(5))
-///        .set_buffer_duration(Some(5))
+///        .set_buffer_duration(Some(Duration::from_millis(500)))
 ///        .put_additional_field("component", Value::String("rust-cs".to_string()))
 ///        .build()
 ///        .unwrap();
@@ -160,7 +174,7 @@ pub fn init_file<P>(path: P, deserializers: Option<log4rs::file::Deserializers>)
 /// }
 /// ```
 ///
-pub fn init_config(config: log4rs::config::Config) -> Result<log4rs::Handle, gelf_logger::Error> {
+pub fn init_config(config: log4rs::config::Config) -> Result<log4rs::Handle, SetLoggerError> {
     Ok(log4rs::init_config(config)?)
 }
 
@@ -171,7 +185,7 @@ pub fn init_config(config: log4rs::config::Config) -> Result<log4rs::Handle, gel
 ///
 /// ## Example
 ///
-/// ```rust
+/// ```rust, ignore
 /// extern crate log4rs_gelf;
 ///
 /// fn main() {

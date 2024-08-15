@@ -45,48 +45,30 @@ use log4rs::config::{Config, Appender, Root};
 use log::LevelFilter;
 
 fn main() {
-   let buffer = log4rs_gelf::BufferAppender::builder()
-       .set_level(GelfLevel::Informational)
-       .set_hostname("localhost")
-       .set_port(12202)
-       .set_use_tls(false)
-       .set_null_character(true)
-       .set_buffer_size(Some(5))
-       .set_buffer_duration(Some(5))
-       .put_additional_field("component", Value::String("rust-cs".to_string()))
-       .build()
-       .unwrap();
+    let buffer = log4rs_gelf::BufferAppender::builder()
+        .set_level(GelfLevel::Informational)
+        .set_hostname("localhost")
+        .set_port(12202)
+        .set_use_tls(false)
+        .
+        .set_null_character(true)
+        .set_buffer_size(Some(5))
+        .set_buffer_duration(Some(Duration::from_millis(500))
+        .put_additional_field("component", Value::String("rust-cs".to_string()))
+        .build()
+        .unwrap();
 
-   let config = Config::builder()
-       .appender(Appender::builder().build("gelf", Box::new(buffer)))
-       .build(Root::builder().appender("gelf").build(LevelFilter::Info))
-       .unwrap();
+    let config = Config::builder()
+        .appender(Appender::builder().build("gelf", Box::new(buffer)))
+        .build(Root::builder().appender("gelf").build(LevelFilter::Info))
+        .unwrap();
 
-   log4rs_gelf::init_config(config).unwrap();
+    log4rs_gelf::init_config(config).unwrap();
 
-   // Do whatever
+    // Do whatever
 
-   log4rs_gelf::flush().expect("Failed to send buffer, log records can be lost !");
+    log4rs_gelf::flush().expect("Failed to send buffer, log records can be lost !");
 }
-```
-
-## OVH Log Data Platform
-
-You can activate the OVH [LDP](https://docs.ovh.com/gb/en/logs-data-platform/) 
-feature including field typing and an preconfigured handler:
-
-```toml
-[dependencies]
-log4rs_gelf = { version = "0.1", features = ["ovh-ldp"] }
-```
-
-And then build the appender:
-
-```rust,no_run
-let buffer = BufferAppender::builder("gra1.logs.ovh.com","XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
-    .put_additional_field("component", Value::String("rust-cs".to_string()))
-    .build()
-    .unwrap();
 ```
 
 ## License
