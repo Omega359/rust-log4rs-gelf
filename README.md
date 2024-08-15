@@ -18,11 +18,9 @@ appenders:
   ldp:
     additional_fields:
       component: rust-cs
-    buffer_duration: 5
     buffer_size: 5
     hostname: 127.0.0.1
-    kind: buffer
-    level: Informational
+    level: Info
     null_character: true
     port: 12202
     use_tls: false
@@ -40,20 +38,18 @@ Programmatically constructing a configuration:
 
 ```rust,no_run
 use serde_gelf::GelfLevel;
-use serde_value::Value;
+use gelf_logger::Value;
 use log4rs::config::{Config, Appender, Root};
 use log::LevelFilter;
 
 fn main() {
     let buffer = log4rs_gelf::BufferAppender::builder()
-        .set_level(GelfLevel::Informational)
+        .set_level(Level::Info)
         .set_hostname("localhost")
         .set_port(12202)
         .set_use_tls(false)
-        .
         .set_null_character(true)
         .set_buffer_size(Some(5))
-        .set_buffer_duration(Some(Duration::from_millis(500))
         .put_additional_field("component", Value::String("rust-cs".to_string()))
         .build()
         .unwrap();
@@ -66,8 +62,6 @@ fn main() {
     log4rs_gelf::init_config(config).unwrap();
 
     // Do whatever
-
-    log4rs_gelf::flush().expect("Failed to send buffer, log records can be lost !");
 }
 ```
 

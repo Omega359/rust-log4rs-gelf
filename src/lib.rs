@@ -23,11 +23,9 @@
 //!   ldp:
 //!     additional_fields:
 //!       component: rust-cs
-//!     buffer_duration: 5
 //!     buffer_size: 5
 //!     hostname: 127.0.0.1
-//!     kind: buffer
-//!     level: Informational
+//!     level: Info
 //!     null_character: true
 //!     port: 12202
 //!     use_tls: false
@@ -43,25 +41,23 @@
 //! Programmatically constructing a configuration:
 //! ```rust
 //! extern crate serde_gelf;
-//! extern crate serde_value;
+//! extern crate gelf_logger;
 //! extern crate log4rs;
 //! extern crate log;
 //!
 //! use serde_gelf::GelfLevel;
-//! use serde_value::Value;
+//! use gelf_logger::Value;
 //! use log4rs::config::{Config, Appender, Root};
-//! use log::LevelFilter;
-//!
+//! use log::{Level,LevelFilter};
+//! use std::time::Duration;
 //! fn main() {
-//!    use std::time::Duration;
-//! let buffer = log4rs_gelf::BufferAppender::builder()
-//!        .set_level(GelfLevel::Informational)
+//!    let buffer = log4rs_gelf::BufferAppender::builder()
+//!        .set_level(Level::Info)
 //!        .set_hostname("localhost")
 //!        .set_port(12202)
 //!        .set_use_tls(false)
 //!        .set_null_character(true)
 //!        .set_buffer_size(Some(5))
-//!        .set_buffer_duration(Some(Duration::from_millis(500)))
 //!        .put_additional_field("component", Value::String("rust-cs".to_string()))
 //!        .build()
 //!        .unwrap();
@@ -75,7 +71,6 @@
 //!
 //!    // Do whatever
 //!
-//!    log4rs_gelf::flush().expect("Failed to send buffer, log records can be lost !");
 //! }
 //! ```
 #![doc(
@@ -117,7 +112,6 @@ mod appender;
 ///
 ///     // Do whatever
 ///
-///     log4rs_gelf::flush().expect("Failed to send buffer, log records can be lost !");
 /// }
 /// ```
 ///
@@ -138,25 +132,25 @@ pub fn init_file<P>(path: P, deserializers: Option<log4rs::config::Deserializers
 ///
 /// ```rust
 /// extern crate serde_gelf;
-/// extern crate serde_value;
+/// extern crate gelf_logger;
 /// extern crate log4rs;
 /// extern crate log;
 ///
 ///use serde_gelf::GelfLevel;
-///use serde_value::Value;
+///use gelf_logger::Value;
 ///use log4rs::config::{Config, Appender, Root};
-///use log::LevelFilter;
+///use std::time::Duration;
+///use log4rs::append::Append;
+///use log::{Level, LevelFilter};
 ///
 /// fn main() {
-///    use std::time::Duration;
-/// let buffer = log4rs_gelf::BufferAppender::builder()
-///        .set_level(GelfLevel::Informational)
+///    let buffer = log4rs_gelf::BufferAppender::builder()
+///        .set_level(Level::Info)
 ///        .set_hostname("localhost")
 ///        .set_port(12202)
 ///        .set_use_tls(false)
 ///        .set_null_character(true)
 ///        .set_buffer_size(Some(5))
-///        .set_buffer_duration(Some(Duration::from_millis(500)))
 ///        .put_additional_field("component", Value::String("rust-cs".to_string()))
 ///        .build()
 ///        .unwrap();
@@ -169,8 +163,6 @@ pub fn init_file<P>(path: P, deserializers: Option<log4rs::config::Deserializers
 ///    log4rs_gelf::init_config(config).unwrap();
 ///
 ///    // Do whatever
-///
-///    log4rs_gelf::flush().expect("Failed to send buffer, log records can be lost !");
 /// }
 /// ```
 ///
@@ -178,25 +170,3 @@ pub fn init_config(config: log4rs::config::Config) -> Result<log4rs::Handle, Set
     Ok(log4rs::init_config(config)?)
 }
 
-
-/// Force current logger record buffer to be sent to the remote server.
-///
-/// It can be useful to perform a flush just before program exit.
-///
-/// ## Example
-///
-/// ```rust, ignore
-/// extern crate log4rs_gelf;
-///
-/// fn main() {
-///     log4rs_gelf::init_file("/tmp/log4rs.yml", None).unwrap();
-///
-///     // Do whatever
-///
-///     log4rs_gelf::flush().expect("Failed to send buffer, log records can be lost !");
-/// }
-/// ```
-///
-pub fn flush() -> Result<(), gelf_logger::Error> {
-    gelf_logger::processor().flush()
-}
