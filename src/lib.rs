@@ -21,6 +21,7 @@
 //! ```yaml
 //! appenders:
 //!   ldp:
+//!     kind: buffer
 //!     additional_fields:
 //!       component: rust-cs
 //!     buffer_size: 5
