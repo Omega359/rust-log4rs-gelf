@@ -28,8 +28,8 @@ impl Deserialize for BufferAppenderDeserializer {
             .set_null_character(config.null_character.clone())
             .set_buffer_size(config.buffer_size.clone())
             .extend_additional_field(config.additional_fields.clone())
-            .set_connect_timeout(config.connect_timeout)
-            .set_write_timeout(config.write_timeout);
+            .set_connect_timeout(config.connect_timeout.map_or(None,|v| Some(Duration::from_secs(v)) ))
+            .set_write_timeout(config.write_timeout.map_or(None,|v| Some(Duration::from_secs(v)) ));
 
         #[cfg(feature = "tls")]
         let appender = match true {
@@ -57,6 +57,6 @@ pub struct Config {
     use_tls: bool,
     buffer_size: Option<usize>,
     additional_fields: BTreeMap<String, Value>,
-    connect_timeout: Option<Duration>,
-    write_timeout: Option<Duration>,
+    connect_timeout: Option<u64>,
+    write_timeout: Option<u64>,
 }
