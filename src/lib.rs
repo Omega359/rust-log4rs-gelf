@@ -85,6 +85,7 @@ extern crate serde_gelf;
 extern crate serde_value;
 extern crate anyhow;
 
+use log4rs::config::Deserializers;
 use log::SetLoggerError;
 pub use appender::{BufferAppender, BufferAppenderBuilder};
 
@@ -169,5 +170,9 @@ pub fn init_file<P>(path: P, deserializers: Option<log4rs::config::Deserializers
 ///
 pub fn init_config(config: log4rs::config::Config) -> Result<log4rs::Handle, SetLoggerError> {
     Ok(log4rs::init_config(config)?)
+}
+
+pub fn deserializers() -> Deserializers {
+    file::deserializers()
 }
 
