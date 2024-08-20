@@ -168,7 +168,10 @@ impl BufferAppenderBuilder {
             .buffer_size(self.buffer_size.unwrap_or(100))
             .extend_additional_fields(self.additional_fields)
             .connect_timeout(self.connect_timeout)
-            .write_timeout(self.write_timeout);
+            .write_timeout(self.write_timeout)
+            .background_error_handler(Some(|err| {
+                eprintln!("{err:?}");
+            }));
 
         #[cfg(feature = "tls")]
         let builder = match true {

@@ -53,10 +53,10 @@ pub struct Config {
     hostname: String,
     port: u16,
     null_character: bool,
-    #[cfg(feature = "tls")]
-    use_tls: bool,
     buffer_size: Option<usize>,
     additional_fields: BTreeMap<String, Value>,
     connect_timeout: Option<u64>,
     write_timeout: Option<u64>,
+    #[cfg(feature = "tls")]
+    use_tls: bool,
 }
