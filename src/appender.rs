@@ -199,7 +199,6 @@ impl fmt::Debug for BufferAppender {
 
 impl Append for BufferAppender {
     fn append(&self, record: &Record) -> anyhow::Result<()> {
-        println!("appending {:#?} to gelf logger", record);
         self.gelf_logger.append(record).context("")
     }
     fn flush(&self) {
