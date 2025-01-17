@@ -47,7 +47,8 @@ pub fn deserializers() -> Deserializers {
 }
 
 /// Struct to manipulate configuration.
-#[derive(serde_derive::Deserialize, Debug, Clone)]
+#[derive(serde::Deserialize, Debug, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct Config {
     level: Level,
     hostname: String,
