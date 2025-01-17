@@ -39,7 +39,8 @@ use std::time::Duration;
 /// }
 /// ```
 pub struct BufferAppender {
-    gelf_logger: GelfLogger
+    gelf_logger: GelfLogger,
+    builder: BufferAppenderBuilder,
 }
 
 /// Builder for [`BufferAppender`](struct.BufferAppender.html).
@@ -67,7 +68,7 @@ pub struct BufferAppender {
 ///         .put_additional_field("component", Value::String("rust-cs".to_string()));
 /// }
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BufferAppenderBuilder {
     level: Level,
     hostname: String,
@@ -162,11 +163,11 @@ impl BufferAppenderBuilder {
     pub fn build(self) -> Result<BufferAppender, gelf_logger::Error> {
         let builder = Builder::new()
             .filter_level(self.level.to_level_filter())
-            .hostname(self.hostname)
+            .hostname(self.hostname.clone())
             .port(self.port)
             .null_character(self.null_character)
             .buffer_size(self.buffer_size.unwrap_or(100))
-            .extend_additional_fields(self.additional_fields)
+            .extend_additional_fields(self.additional_fields.clone())
             .connect_timeout(self.connect_timeout)
             .write_timeout(self.write_timeout)
             .background_error_handler(Some(|err| {
@@ -178,7 +179,7 @@ impl BufferAppenderBuilder {
             _ => builder.tls(self.use_tls)
         };
 
-        Ok(BufferAppender { gelf_logger: builder.build()? })
+        Ok(BufferAppender { builder: self.clone(), gelf_logger: builder.build()? })
     }
 }
 
@@ -192,13 +193,13 @@ impl BufferAppender {
 
 impl fmt::Debug for BufferAppender {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("GelfAppender").finish()
+        fmt::Debug::fmt(&self.builder, fmt)
     }
 }
 
-
 impl Append for BufferAppender {
     fn append(&self, record: &Record) -> anyhow::Result<()> {
+        println!("appending {:#?} to gelf logger", record);
         self.gelf_logger.append(record).context("")
     }
     fn flush(&self) {
